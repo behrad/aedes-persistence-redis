@@ -352,7 +352,7 @@ function processKeysForClient (all, that) {
 
   for (var i = 0; i < keys.length; i++) {
     key = keys[i]
-    raw = that[key]
+    raw = all[key]
     if (!raw) {
       continue
     }
