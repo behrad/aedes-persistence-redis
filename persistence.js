@@ -143,7 +143,7 @@ RedisPersistence.prototype.addSubscriptions = function (client, subs, cb) {
 
   multi.hmset(clientSubKey, toStore)
 
-  // this._addedSubscriptions(client, subs)
+  this._addedSubscriptions(client, subs)
 
   multi.exec(function execMulti (err, results) {
     if (err) {
