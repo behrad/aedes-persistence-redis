@@ -16,7 +16,7 @@ var qlobberOpts = {
   wildcard_some: '#'
 }
 var offlineClientsCountKey = 'counter:offline:clients'
-var offlineSubscriptionsCountKey = 'counter:offline:subscriptions'
+// var offlineSubscriptionsCountKey = 'counter:offline:subscriptions'
 var subscriptionsKey = 'sub:client'
 var willKey = 'will'
 var retainedKey = 'retained'
@@ -134,7 +134,7 @@ RedisPersistence.prototype.addSubscriptions = function (client, subs, cb) {
     if (sub.qos > 0) {
       var subClientKey = 'sub:client:' + sub.topic
       var encoded = msgpack.encode(new Sub(client.id, sub.topic, sub.qos))
-      multi.rpush(subscriptionsKey, subClientKey)
+      // multi.rpush(subscriptionsKey, subClientKey)
       multi.hset(subClientKey, client.id, encoded)
       count++
       that._waitFor(client, sub.topic, finish)
@@ -143,7 +143,7 @@ RedisPersistence.prototype.addSubscriptions = function (client, subs, cb) {
 
   multi.hmset(clientSubKey, toStore)
 
-  this._addedSubscriptions(client, subs)
+  // this._addedSubscriptions(client, subs)
 
   multi.exec(function execMulti (err, results) {
     if (err) {
@@ -154,10 +154,12 @@ RedisPersistence.prototype.addSubscriptions = function (client, subs, cb) {
     var existed = results.length > 0 && results[0][1] > 0
     var pipeline = that._getPipeline()
     if (!existed) {
+      pipeline.rpush(subscriptionsKey, subs.map(function (s) { return 'sub:client:' + s.topic }))
       pipeline.incr(offlineClientsCountKey)
     }
 
-    pipeline.incrby(offlineSubscriptionsCountKey, count, finish)
+    // pipeline.incrby(offlineSubscriptionsCountKey, count, finish)
+    finish()
   })
 
   function finish () {
@@ -201,10 +203,11 @@ RedisPersistence.prototype.removeSubscriptions = function (client, subs, cb) {
       return cb(err)
     }
 
-    var skipped = 0
-    skipped = getSkipped(results, skipped)
-    var pipeline = that._getPipeline()
-    pipeline.decrby(offlineSubscriptionsCountKey, subs.length - skipped, finish)
+    // var skipped = 0
+    // skipped = getSkipped(results, skipped)
+    finish()
+    // var pipeline = that._getPipeline()
+    // pipeline.decrby(offlineSubscriptionsCountKey, subs.length - skipped, finish)
   })
 
   function finish () {
@@ -221,14 +224,14 @@ function toSub (topic) {
   }
 }
 
-function getSkipped (results, skipped) {
-  for (var i = 1; i < results.length; i += 3) {
-    if (results[i] === '0') {
-      skipped++
-    }
-  }
-  return skipped
-}
+// function getSkipped (results, skipped) {
+//   for (var i = 1; i < results.length; i += 3) {
+//     if (results[i] === '0') {
+//       skipped++
+//     }
+//   }
+//   return skipped
+// }
 
 RedisPersistence.prototype.subscriptionsByClient = function (client, cb) {
   var pipeline = this._getPipeline()
@@ -265,7 +268,7 @@ RedisPersistence.prototype.countOffline = function (cb) {
   var subsCount = -1
   var clientsCount = -1
 
-  pipeline.get(offlineSubscriptionsCountKey, function countOfflineSubs (err, count) {
+  pipeline.llen(subscriptionsKey, function countOfflineSubs (err, count) {
     if (err) {
       return cb(err)
     }
@@ -321,7 +324,7 @@ RedisPersistence.prototype._setup = function () {
     processKeysForClient(all, that)
   })
 
-  this._db.lrange(subscriptionsKey, 0, 10000, function lrangeResult (err, results) {
+  this._db.lrange(subscriptionsKey, 0, -1, function lrangeResult (err, results) {
     if (err) {
       splitStream.emit('error', err)
     } else {
