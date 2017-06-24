@@ -39,7 +39,7 @@ Mosca's approach of keeping maps of keys and then accessing them rather than doi
 
 Changes made :-
 - `retained` key is a Redis Hashmap of all retained keys.
-- `sub:client` key is a Redis list of all subscription keys
+- `sub:client` key is a Redis set of all subscription keys
 - `will` key is a Redis list for all will keys
 - `outgoing: + clientId` key will contain keys for all outgoing messages
 

@@ -154,7 +154,7 @@ RedisPersistence.prototype.addSubscriptions = function (client, subs, cb) {
     var existed = results.length > 0 && results[0][1] > 0
     var pipeline = that._getPipeline()
     if (!existed) {
-      pipeline.rpush(subscriptionsKey, subs.map(function (s) { return 'sub:client:' + s.topic }))
+      pipeline.sadd(subscriptionsKey, subs.map(function (s) { return 'sub:client:' + s.topic }))
       pipeline.incr(offlineClientsCountKey)
     }
 
@@ -188,7 +188,7 @@ RedisPersistence.prototype.removeSubscriptions = function (client, subs, cb) {
   for (var i = 0; i < subs.length; i++) {
     var topic = subs[i]
     var subClientKey = 'sub:client:' + topic
-    multi.lrem(subscriptionsKey, 1, subClientKey)
+    multi.srem(subscriptionsKey, 1, subClientKey)
     multi.hdel(subClientKey, client.id)
     that._waitFor(client, topic, finish)
     count++
@@ -268,7 +268,7 @@ RedisPersistence.prototype.countOffline = function (cb) {
   var subsCount = -1
   var clientsCount = -1
 
-  pipeline.llen(subscriptionsKey, function countOfflineSubs (err, count) {
+  pipeline.scard(subscriptionsKey, function countOfflineSubs (err, count) {
     if (err) {
       return cb(err)
     }
@@ -324,7 +324,7 @@ RedisPersistence.prototype._setup = function () {
     processKeysForClient(all, that)
   })
 
-  this._db.lrange(subscriptionsKey, 0, -1, function lrangeResult (err, results) {
+  this._db.smembers(subscriptionsKey, function lrangeResult (err, results) {
     if (err) {
       splitStream.emit('error', err)
     } else {
