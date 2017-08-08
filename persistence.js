@@ -147,11 +147,11 @@ RedisPersistence.prototype.removeSubscriptions = function (client, subs, cb) {
   var removableTopics = []
   var errored = false
 
-  for (var i = 0; i < subs.length; i++) {
-    if (this._matcher.match(subs[i]).length === 1) {
-      removableTopics.push(subs[i])
-    }
-  }
+  // for (var i = 0; i < subs.length; i++) {
+  //   if (this._matcher.match(subs[i]).length === 1) {
+  //     removableTopics.push(subs[i])
+  //   }
+  // }
 
   var that = this
   this._db.hdel(clientSubKey, subs, function subKeysRemoved (err) {
